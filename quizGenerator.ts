@@ -36,8 +36,6 @@ function splitSentences(text: string): string[] {
     .filter((s) => s.length > 25 && s.length < 240 && /[a-zA-Z]/.test(s))
 }
 
-/** Picks a reasonable "key term" in a sentence to blank out: prefers a
- * capitalized word/number/longer noun-like token that isn't sentence-initial. */
 function pickKeyTerm(sentence: string): string | null {
   const words = sentence.split(/\s+/)
   const candidates: { word: string; score: number }[] = []
@@ -67,7 +65,6 @@ function buildDistractors(term: string, pool: string[]): string[] {
     .filter((w) => w.toLowerCase() !== term.toLowerCase() && w.length >= 4)
     .filter((w, i, arr) => arr.findIndex((x) => x.toLowerCase() === w.toLowerCase()) === i)
 
-  // prefer similar-length words for plausible-looking wrong answers
   filtered.sort((a, b) => Math.abs(a.length - term.length) - Math.abs(b.length - term.length))
 
   const picks: string[] = []
@@ -77,7 +74,7 @@ function buildDistractors(term: string, pool: string[]): string[] {
     picks.push(cased)
   }
 
-  // pad with generic fallbacks if the source text was short
+
   const fallbacks = ['None of these', 'Not mentioned', 'Unclear from the text']
   while (picks.length < 3) picks.push(fallbacks[picks.length % fallbacks.length])
   return picks
