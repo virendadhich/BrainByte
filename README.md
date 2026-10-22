@@ -1,60 +1,57 @@
 # BrainByte
 
-A cinematic, 3D quiz-platform landing page. React 18 + Vite + TypeScript + Tailwind CSS,
-with Three.js / React Three Fiber for the liquid-metal scene and Framer Motion for the
-scroll-driven choreography.
+A cinematic, 3D quiz-platform landing page built with React 18, Vite, TypeScript, and Tailwind CSS. Three.js / React Three Fiber powers the liquid-metal scene, while Framer Motion handles scroll-driven animations.
 
-## Run it
+## Run It
 
-This was built in a sandbox without internet access, so dependencies haven't been
-installed or built here — do that on your machine:
+Install the dependencies:
 
 ```bash
 npm install
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-Then open the printed local URL (typically `http://localhost:5173`).
+Open the local URL displayed in your terminal, typically `http://localhost:5173`.
 
-To build for production:
+## Build for Production
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## What's inside
+## What's Inside
 
-```
+```text
 src/
-  components/
-    Navbar.tsx           — liquid-glass navbar, morphs on scroll
-    BrainByteLogo.tsx     — original SVG logo, hover animation
-    Hero.tsx               — full-screen hero, scroll-linked 3D + type reveal
-    LiquidMetalScene.tsx   — R3F scene: distorted metallic blob, rings, glass panels
-    WorldSection.tsx       — orbiting content fragments around a metallic sphere
-    FeatureSection.tsx     — editorial 4-panel feature layout
-    QuizPreview.tsx        — sample question UI used inside Quiz Arena
-    TiltCard.tsx           — reusable cursor-tilt wrapper (disabled on touch)
-    LiquidGlassPanel.tsx   — reusable frosted/liquid-glass surface
-    HowItWorks.tsx         — 3-step cinematic scroll section
-    FinalCTA.tsx           — closing section with an approaching metallic orb
-    Footer.tsx
-  hooks.ts                — usePrefersReducedMotion, useIsMobile
-  App.tsx
-  index.css               — palette, liquid-glass utility classes, grain overlay
+├── components/
+│   ├── Navbar.tsx
+│   ├── BrainByteLogo.tsx
+│   ├── Hero.tsx
+│   ├── LiquidMetalScene.tsx
+│   ├── WorldSection.tsx
+│   ├── FeatureSection.tsx
+│   ├── QuizPreview.tsx
+│   ├── TiltCard.tsx
+│   ├── LiquidGlassPanel.tsx
+│   ├── HowItWorks.tsx
+│   ├── FinalCTA.tsx
+│   └── Footer.tsx
+├── hooks.ts
+├── App.tsx
+└── index.css
 ```
 
-## Notes
+## Features
 
-- Color palette is intentionally restricted to warm neutrals (ivory, cream, silver,
-  bronze, graphite) — no blue/cyan anywhere, per the brief.
-- `LiquidMetalScene` checks for WebGL support and falls back to a static gradient if
-  it's unavailable, so the page never breaks.
-- `prefers-reduced-motion` disables the shader's continuous motion and the entrance
-  stagger; scroll-linked transforms remain (they're driven by user scrolling, not
-  autoplaying animation).
-- On small screens, `TiltCard`'s cursor tilt is disabled and the R3F scene renders at a
-  lower device-pixel ratio; sections that used a 6-column CSS grid stack to one column.
-- Fonts (Fraunces for display type, Inter for body) load from Google Fonts in
-  `index.html` — swap for self-hosted files if you need to work offline.
+* Cinematic 3D liquid-metal visuals.
+* Warm, neutral color palette featuring ivory, cream, silver, bronze, and graphite.
+* WebGL fallback for devices that cannot render the 3D scene.
+* Reduced-motion support for accessibility.
+* Responsive layouts for mobile devices.
+* Fraunces and Inter typography loaded through Google Fonts.
