@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, RotateCcw } from 'lucide-react'
-import type { QuizQuestion } from '../lib/quizGenerator'
+import type { QuizQuestion } from '../lib/studySet'
 import LiquidGlassPanel from './LiquidGlassPanel'
 
 interface QuizPlayerProps {

@@ -1,4 +1,4 @@
-import type { StudySet } from './quizGenerator'
+import type { StudySet } from './studySet'
 
 export const demoSets: StudySet[] = [
   {

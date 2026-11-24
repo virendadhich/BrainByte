@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
-import type { Flashcard } from '../lib/quizGenerator'
+import type { Flashcard } from '../lib/studySet'
 
 interface FlashcardDeckProps {
   cards: Flashcard[]

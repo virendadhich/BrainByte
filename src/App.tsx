@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import CreatePage from './pages/CreatePage'
 import QuizzesPage from './pages/QuizzesPage'
+import { AuthProvider } from './lib/AuthContext'
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,32 +19,34 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <AppLayout>
-              <LandingPage />
-            </AppLayout>
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <AppLayout>
-              <CreatePage />
-            </AppLayout>
-          }
-        />
-        <Route
-          path="/quizzes"
-          element={
-            <AppLayout>
-              <QuizzesPage />
-            </AppLayout>
-          }
-        />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <AppLayout>
+                <LandingPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <AppLayout>
+                <CreatePage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/quizzes"
+            element={
+              <AppLayout>
+                <QuizzesPage />
+              </AppLayout>
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

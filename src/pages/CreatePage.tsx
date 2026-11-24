@@ -1,23 +1,25 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Sparkles, X, Loader2 } from 'lucide-react'
 import FileDropzone from '../components/FileDropzone'
 import LiquidGlassPanel from '../components/LiquidGlassPanel'
 import { extractTextFromFile } from '../lib/extractText'
-import { generateStudySet } from '../lib/quizGenerator'
-import { saveStudySet } from '../lib/storage'
+import { generateStudySetFromNotes, saveStudySet } from '../lib/api'
+import { useAuth } from '../lib/AuthContext'
+import { setActiveSetId } from '../lib/storage'
 
-type Stage = 'idle' | 'reading' | 'generating' | 'error'
+type Stage = 'idle' | 'reading' | 'generating'
 
 const steps = [
   { icon: '📄', title: 'Add your material', text: 'Upload a PDF or text file, or paste notes directly.' },
-  { icon: '⚡', title: 'BrainByte reads it', text: 'Your material is scanned for key terms and ideas, right in your browser.' },
+  { icon: '⚡', title: 'AI builds your set', text: 'Your notes are sent securely to Gemini to create study material.' },
   { icon: '🧠', title: 'Study instantly', text: 'Get a flashcard deck and a practice quiz built from your own material.' },
 ]
 
 export default function CreatePage() {
   const navigate = useNavigate()
+  const { account, loading: authLoading } = useAuth()
   const [pastedText, setPastedText] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [title, setTitle] = useState('')
@@ -49,17 +51,44 @@ export default function CreatePage() {
       setStage('generating')
       await new Promise((r) => setTimeout(r, 500))
 
-      const set = generateStudySet(combined, title || 'My study set')
-      saveStudySet(set)
+      const { studySet: set } = await generateStudySetFromNotes(combined, title || 'My study set')
+      await saveStudySet(set)
+      setActiveSetId(set.id)
       navigate('/quizzes')
     } catch (err) {
       console.error(err)
-      setError('Something went wrong reading that file. Try a different PDF or paste the text instead.')
-      setStage('error')
+      setError(err instanceof Error ? err.message : 'Unable to save your study set.')
+      setStage('idle')
     }
   }
 
   const canGenerate = (pastedText.trim().length > 0 || attachedFiles.length > 0) && stage === 'idle'
+
+  if (authLoading || !account) {
+    return (
+      <section className="min-h-screen px-6 pb-32 pt-36 sm:pt-44">
+        <div className="mx-auto max-w-3xl">
+          <LiquidGlassPanel className="p-8">
+            <h1 className="font-display text-3xl text-cream">
+              {authLoading ? 'Checking your account…' : 'Sign in to create a study set'}
+            </h1>
+            <p className="mt-3 text-silver">
+              Your saved study sets are private to your account. Sign in or create an account to
+              save a new one.
+            </p>
+            {!authLoading && (
+              <Link
+                to="/quizzes"
+                className="mt-6 inline-flex rounded-full bg-ivory px-6 py-3 text-sm font-medium text-void"
+              >
+                Go to your quizzes
+              </Link>
+            )}
+          </LiquidGlassPanel>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="relative min-h-screen w-full px-6 pb-32 pt-36 sm:pt-44">
@@ -69,9 +98,9 @@ export default function CreatePage() {
           Turn your notes into a quiz.
         </h1>
         <p className="mt-4 max-w-xl text-silver">
-          Drop in a PDF, a text file, or paste your notes below. BrainByte reads it locally in
-          your browser and builds a flashcard deck and a practice quiz from it — no upload to a
-          server required.
+          Drop in a PDF, a text file, or paste your notes below. Files are read in your browser;
+          the extracted notes are sent to Gemini to generate a flashcard deck and practice quiz.
+          Only the generated study set is saved to your account.
         </p>
 
         <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -125,6 +154,10 @@ export default function CreatePage() {
             rows={8}
             className="liquid-glass w-full resize-none rounded-[28px] px-6 py-5 text-sm text-cream placeholder:text-gray focus:outline-none"
           />
+          <p className="text-xs text-gray">
+            Maximum combined material: 200,000 characters. Larger inputs may take longer and use
+            more AI tokens.
+          </p>
 
           <input
             value={title}
@@ -154,8 +187,8 @@ export default function CreatePage() {
           </button>
 
           <p className="text-center text-xs text-gray">
-            This demo builds study sets with lightweight in-browser text analysis — plug in a
-            language model on a backend to make the questions smarter.
+            Your notes are sent to Gemini for generation. The API key stays on the server, and the
+            generated study set is saved to your private account.
           </p>
         </div>
       </div>

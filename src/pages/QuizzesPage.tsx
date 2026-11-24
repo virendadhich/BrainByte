@@ -1,30 +1,92 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Layers, ListChecks, Plus } from 'lucide-react'
+import { Layers, ListChecks, LogOut, Plus } from 'lucide-react'
 import LiquidGlassPanel from '../components/LiquidGlassPanel'
 import QuizPlayer from '../components/QuizPlayer'
 import FlashcardDeck from '../components/FlashcardDeck'
 import { demoSets } from '../lib/demoSets'
-import { loadStudySets, getActiveSetId, setActiveSetId } from '../lib/storage'
-import type { StudySet } from '../lib/quizGenerator'
+import { loadStudySets } from '../lib/api'
+import { useAuth } from '../lib/AuthContext'
+import { getActiveSetId, setActiveSetId } from '../lib/storage'
+import type { StudySet } from '../lib/studySet'
 
 type Mode = 'quiz' | 'flashcards'
 
 export default function QuizzesPage() {
+  const { account, loading: authLoading, error: authError, login, register, logout } = useAuth()
   const [userSets, setUserSets] = useState<StudySet[]>([])
   const [activeId, setActiveId] = useState<string>('demo-science')
   const [mode, setMode] = useState<Mode>('quiz')
+  const [setsLoading, setSetsLoading] = useState(false)
+  const [setsError, setSetsError] = useState<string | null>(null)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [authBusy, setAuthBusy] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
-    const sets = loadStudySets()
-    setUserSets(sets)
-    const stored = getActiveSetId()
-    if (stored && [...sets, ...demoSets].some((s) => s.id === stored)) setActiveId(stored)
-  }, [])
+    let active = true
+    if (authLoading) return
+    if (!account) {
+      setUserSets([])
+      setSetsLoading(false)
+      setSetsError(null)
+      return
+    }
+
+    setSetsLoading(true)
+    setSetsError(null)
+    loadStudySets()
+      .then((sets) => {
+        if (!active) return
+        setUserSets(sets)
+        const stored = getActiveSetId()
+        if (stored && [...sets, ...demoSets].some((set) => set.id === stored)) {
+          setActiveId(stored)
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setSetsError(error instanceof Error ? error.message : 'Unable to load your study sets.')
+        }
+      })
+      .finally(() => {
+        if (active) setSetsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [authLoading, account?.id])
 
   const allSets = [...userSets, ...demoSets]
   const activeSet = allSets.find((s) => s.id === activeId) || allSets[0]
+
+  const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setAuthBusy(true)
+    setFormError(null)
+    try {
+      if (authMode === 'login') await login(email, password)
+      else await register(email, password)
+      setPassword('')
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Unable to authenticate.')
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    setFormError(null)
+    try {
+      await logout()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Unable to sign out.')
+    }
+  }
 
   const selectSet = (id: string) => {
     setActiveId(id)
@@ -36,6 +98,70 @@ export default function QuizzesPage() {
     <section className="min-h-screen w-full px-4 pb-24 pt-32 sm:px-6 sm:pt-40">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="lg:sticky lg:top-28 lg:self-start">
+          <LiquidGlassPanel className="mb-6 p-4">
+            {authLoading ? (
+              <p className="text-xs text-silver">Checking account…</p>
+            ) : account ? (
+              <div>
+                <p className="truncate text-sm text-cream">{account.email}</p>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="mt-3 flex items-center gap-2 text-xs text-silver hover:text-cream"
+                >
+                  <LogOut size={13} /> Sign out
+                </button>
+              </div>
+            ) : (
+              <form className="space-y-3" onSubmit={submitAuth}>
+                <p className="text-sm text-cream">
+                  {authMode === 'login' ? 'Sign in to your account' : 'Create your account'}
+                </p>
+                {authError && <p className="text-xs text-[#c98a6b]">{authError}</p>}
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="Email"
+                  aria-label="Email"
+                  className="liquid-glass w-full rounded-full px-4 py-2.5 text-sm text-cream placeholder:text-gray focus:outline-none"
+                />
+                <input
+                  type="password"
+                  autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+                  minLength={10}
+                  maxLength={72}
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Password (10+ characters)"
+                  aria-label="Password"
+                  className="liquid-glass w-full rounded-full px-4 py-2.5 text-sm text-cream placeholder:text-gray focus:outline-none"
+                />
+                {formError && <p className="text-xs text-[#c98a6b]">{formError}</p>}
+                <button
+                  type="submit"
+                  disabled={authBusy}
+                  className="w-full rounded-full bg-ivory px-4 py-2.5 text-sm font-medium text-void disabled:opacity-50"
+                >
+                  {authBusy ? 'Please wait…' : authMode === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode(authMode === 'login' ? 'register' : 'login')
+                    setFormError(null)
+                  }}
+                  className="w-full text-xs text-silver hover:text-cream"
+                >
+                  {authMode === 'login' ? 'Need an account? Sign up' : 'Already registered? Sign in'}
+                </button>
+              </form>
+            )}
+          </LiquidGlassPanel>
+
           <div className="mb-4 flex items-center justify-between">
             <p className="text-xs uppercase tracking-[0.14em] text-silver">Your sets</p>
             <Link
@@ -46,7 +172,10 @@ export default function QuizzesPage() {
             </Link>
           </div>
 
-          {userSets.length === 0 && (
+          {setsLoading && <p className="mb-4 text-xs text-silver">Loading your study sets…</p>}
+          {setsError && <p className="mb-4 text-xs text-[#c98a6b]">{setsError}</p>}
+
+          {account && !setsLoading && userSets.length === 0 && (
             <LiquidGlassPanel className="mb-4 p-4 text-xs text-silver">
               You haven't created a set yet.{' '}
               <Link to="/create" className="text-cream underline underline-offset-4">
