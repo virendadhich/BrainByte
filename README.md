@@ -6,7 +6,8 @@ scroll-driven choreography.
 
 ## Run it
 
-Requires Node.js 20+ and MySQL 8+.
+Requires Node.js 20+, JDK 21+, and MySQL 8+. The checked-in Maven Wrapper
+downloads Maven automatically when the API is first started.
 
 ```bash
 npm install
@@ -22,18 +23,22 @@ GRANT ALL PRIVILEGES ON brainbyte.* TO 'brainbyte'@'localhost';
 
 Copy `.env.example` to `.env` and set `MYSQL_USER`, `MYSQL_PASSWORD`, and
 `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/apikey).
-The API creates its tables on startup. `GEMINI_MODEL` defaults to
-`gemini-3.5-flash-lite`. Keep `.env` private and never commit it.
+The Spring Boot API reads this file from the project root and creates its tables
+on startup using JDBC. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`.
+Keep `.env` private and never commit it.
 
-Run the API and frontend in separate terminals:
+Run the Java JDBC API and frontend in separate terminals:
 
 ```bash
 npm run api
 npm run dev
 ```
 
+`npm run api` starts the Spring Boot API on port 3001 using the Maven Wrapper.
+Its MySQL access uses
+Spring JDBC and Connector/J; the former Express/mysql2 API is no longer used.
 Open the Vite URL (typically `http://localhost:5173`). Vite proxies `/api`
-requests to the API on port 3001.
+requests to the Java API on port 3001.
 
 If sign-in reports that the account API is unreachable, make sure the API
 terminal is running without a startup error. The API requires valid
@@ -67,6 +72,12 @@ MySQL and private to its account. The API accepts up to 200,000 characters per
 study set, keeps the 20 most recent sets per account, and rate-limits generation
 requests. Larger inputs may take longer and use more tokens.
 Account verification, password reset, and social sign-in are not included.
+
+## Java course source files
+
+The runnable course materials are in `java-examples/`. The actual application
+backend is in `backend/` and uses JDBC for account, session, and study-set
+database operations.
 
 ## What's inside
 
